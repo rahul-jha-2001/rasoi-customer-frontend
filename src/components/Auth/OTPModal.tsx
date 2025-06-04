@@ -8,6 +8,7 @@ import { X } from "lucide-react";
 import { auth, getRecaptcha, resetRecaptcha } from "@/lib/firebase";
 import { signInWithPhoneNumber, type ConfirmationResult } from "firebase/auth";
 import { toast } from "sonner";
+import { useUser } from "@/lib/context/UserContext";
 
 interface OTPModalProps {
   open: boolean;
@@ -105,34 +106,49 @@ export default function OTPModal({ open, onClose }: OTPModalProps) {
       toast.error("Please enter the OTP");
       return;
     }
-
+  
     if (!confirmation) {
       toast.error("No confirmation result available");
       return;
     }
-
+  
     setLoading(true);
     try {
+      // 1. Confirm OTP with Firebase
       const credential = await confirmation.confirm(otp);
       const idToken = await credential.user.getIdToken();
-
-      const response = await fetch("/api/auth/firebase", {
+  
+      // 2. Call your Next.js server to assign claims
+      const signupResponse = await fetch("/api/auth/otp-signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken, name }),
+        body: JSON.stringify({ token: idToken, name }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Authentication failed");
+  
+      if (!signupResponse.ok) {
+        throw new Error("Signup failed");
       }
-
+  
+      // 3. Refresh token to get updated claims
+      const refreshedIdToken = await credential.user.getIdToken(true);
+  
+      // 4. Call your server to generate session cookie
+      const sessionResponse = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: refreshedIdToken }),
+      });
+  
+      if (!sessionResponse.ok) {
+        throw new Error("Session cookie setup failed");
+      }
+  
       toast.success("Successfully authenticated!");
       handleClose();
       window.location.reload();
     } catch (error: any) {
       console.error("OTP verification failed:", error);
-
+  
       if (error.code === "auth/invalid-verification-code") {
         toast.error("Invalid OTP. Try again.");
       } else if (error.code === "auth/code-expired") {
@@ -146,12 +162,7 @@ export default function OTPModal({ open, onClose }: OTPModalProps) {
       setLoading(false);
     }
   };
-
-  const goBack = () => {
-    setStep("PHONE");
-    setOtp("");
-    setConfirmation(null);
-  };
+  
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>

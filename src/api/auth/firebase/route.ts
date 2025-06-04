@@ -9,12 +9,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing idToken or name" }, { status: 400 })
     }
 
-    // Here you would typically:
-    // 1. Verify the idToken with Firebase Admin SDK
-    // 2. Create or update user in your database
-    // 3. Set session cookies or JWT tokens
-
-    // For demo purposes, we'll just set a simple cookie
     const cookieStore = await cookies()
     cookieStore.set("auth-token", idToken, {
       httpOnly: true,

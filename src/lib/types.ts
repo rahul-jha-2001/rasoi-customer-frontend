@@ -375,7 +375,7 @@ export enum ProductStatus {
     GSTPercentage: number;
     category: Category;
     dietaryPref: DietaryPreference[];
-    imageURL: string;
+    ImageUrl: string;
     imageBytes?: string;
     addOns: AddOn[];
     createdAt: string;
@@ -470,22 +470,7 @@ export enum ProductStatus {
     prevPage: number;
   }
   
-  export interface CreateStoreRequest {
-    userUuid: string;
-    storeName: string;
-    gstNumber: string;
-    isActive: boolean;
-    isOpen: boolean;
-    description: string;
-  }
-  
-  export interface UpdateStoreRequest {
-    userUuid: string;
-    storeUuid: string;
-    storeName?: string;
-    gstNumber?: string;
-  }
-  
+
   export interface Store {
     storeUuid: string;
     storeName: string;
@@ -502,11 +487,7 @@ export enum ProductStatus {
     store: Store;
   }
   
-  export interface GetAllStoresResponse {
-    stores: Store[];
-    prevPage: number;
-    nextPage: number;
-  }
+
   
   export interface Address {
     addressUuid: string;
@@ -521,31 +502,23 @@ export enum ProductStatus {
     updatedAt: string;
   }
   
-  export interface AddAddressRequest {
-    userUuid: string;
-    storeUuid: string;
-    addressLine1: string;
-    addressLine2: string;
-    landmark: string;
-    city: string;
-    state: string;
-    country: string;
-    pincode: string;
+  export interface OtpSignupRequest {
+    token: string;         // Firebase ID token from OTP signin
+    name: string;
+    phone_number: string;
   }
   
-  export interface UpdateAddressRequest {
-    storeUuid: string;
-    addressUuid: string;
-    addressLine1?: string;
-    addressLine2?: string;
-    landmark?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    pincode?: string;
+  export interface CreateUserRequest {
+    firebase_uid: string;
+    token: string;
   }
   
-  export interface AddressResponse {
-    storeUuid: string;
-    address: Address;
+  export interface AccessTokenResponse {
+    token: string;          // Short-lived JWT
+    session_token: string;  // Firebase session cookie
   }
+  
+  export interface TokenRefreshRequest {
+    session_token: string;
+  }
+  

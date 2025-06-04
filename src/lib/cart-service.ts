@@ -1,137 +1,181 @@
 // src/lib/server/cart-service.ts
 
-import { apiFetch, invalidatePrefix } from "./api";
+import { CartItem } from "@/lib/types";
+import { apiFetch } from "./api-fetch";
+import type {
+  CreateCartRequest,
+  GetCartRequest,
+  UpdateCartRequest,
+  DeleteCartRequest,
+  AddCartItemRequest,
+  RemoveCartItemRequest,
+  AddQuantityRequest,
+  RemoveQuantityRequest,
+  CreateAddOnRequest,
+  RemoveAddOnRequest,
+  IncreaseAddOnQuantityRequest,
+  RemoveAddOnQuantityRequest,
+  ValidCouponRequest,
+  AddCouponRequest,
+  RemoveCouponRequest,
+  ValidateCartRequest,
+  CartResponse
+} from "@/lib/types"
 
-export interface AddCartItemRequest {
-  storeUuid: string;
-  userPhone: string;
-  cartUuid: string;
-  productUuid: string;
-}
-
-export interface RemoveCartItemRequest {
-  storeUuid: string;
-  userPhone: string;
-  cartUuid: string;
-  cartItemUuid: string;
-  productUuid: string;
-}
-
-export interface AddQuantityRequest extends RemoveCartItemRequest {}
-export interface RemoveQuantityRequest extends RemoveCartItemRequest {}
-
-export interface CouponActionRequest {
-  storeUuid: string;
-  userPhone: string;
-  cartUuid: string;
-  couponCode: string;
-}
-
-export interface CartIdentifier {
-  storeUuid: string;
-  userPhone: string;
-  cartUuid?: string;
-}
 
 const cartService = {
-  addCartItem: async (data: AddCartItemRequest, token: string) => {
-    const res = await apiFetch(
-      `/v1/store/${data.storeUuid}/user/${data.userPhone}/cart/${data.cartUuid}/cartitem`,
+  createCart: async (data: CreateCartRequest, token: string | null): Promise<CartResponse> =>
+    await apiFetch(
+      `/v1/store/${data.storeUuid}/user/${data.userPhoneNo}/cart`,
       "POST",
       token,
       data,
       false,
-      { storeUuid: data.storeUuid, userUuid: data.userPhone }
-    );
-    await invalidatePrefix(`/v1/store/${data.storeUuid}/user/${data.userPhone}/cart`, {
-      storeUuid: data.storeUuid,
-      userUuid: data.userPhone,
-    });
-    return res;
-  },
+      { storeUuid: data.storeUuid }
+    ),
 
-  getCart: async (data: CartIdentifier, token: string) => {
-    const suffix = data.cartUuid ? `/${data.cartUuid}` : "";
-    return await apiFetch(
-      `/v1/store/${data.storeUuid}/user/${data.userPhone}/cart${suffix}`,
-      "GET",
-      token,
-      undefined,
-      true,
-      { storeUuid: data.storeUuid, userUuid: data.userPhone }
-    );
-  },
-
-  removeCartItem: async (data: RemoveCartItemRequest, token: string) => {
-    const res = await apiFetch(
-      `/v1/store/${data.storeUuid}/user/${data.userPhone}/cart/${data.cartUuid}/cartitem`,
-      "DELETE",
-      token,
-      data,
-      false,
-      { storeUuid: data.storeUuid, userUuid: data.userPhone }
-    );
-    await invalidatePrefix(`/v1/store/${data.storeUuid}/user/${data.userPhone}/cart`, {
-      storeUuid: data.storeUuid,
-      userUuid: data.userPhone,
-    });
-    return res;
-  },
-
-  addQuantity: async (data: AddQuantityRequest, token: string) => {
-    return await apiFetch(
-      `/v1/store/${data.storeUuid}/user/${data.userPhone}/cart/${data.cartUuid}/cartitem/${data.cartItemUuid}/Add`,
-      "PATCH",
-      token,
-      data,
-      false,
-      { storeUuid: data.storeUuid, userUuid: data.userPhone }
-    );
-  },
-
-  removeQuantity: async (data: RemoveQuantityRequest, token: string) => {
-    return await apiFetch(
-      `/v1/store/${data.storeUuid}/user/${data.userPhone}/cart/${data.cartUuid}/cartitem/${data.cartItemUuid}/Remove`,
-      "PATCH",
-      token,
-      data,
-      false,
-      { storeUuid: data.storeUuid, userUuid: data.userPhone }
-    );
-  },
-
-  validateCoupon: async (data: CouponActionRequest, token: string) => {
-    return await apiFetch(
-      `/v1/store/${data.storeUuid}/user/${data.userPhone}/cart/${data.cartUuid}/validate_coupon/${data.couponCode}`,
+  getCart: async (data: GetCartRequest, token: string | null): Promise<CartResponse> =>
+    await apiFetch(
+      `/v1/store/${data.storeUuid}/user/${data.userPhoneNo}/cart/${data.cartUuid}`,
       "GET",
       token,
       undefined,
       false,
-      { storeUuid: data.storeUuid, userUuid: data.userPhone }
-    );
-  },
+      { storeUuid: data.storeUuid }
+    ),
 
-  addCoupon: async (data: CouponActionRequest, token: string) => {
-    return await apiFetch(
-      `/v1/store/${data.storeUuid}/user/${data.userPhone}/cart/${data.cartUuid}/coupon/${data.couponCode}`,
+
+  updateCart: async (data: UpdateCartRequest, token: string | null): Promise<CartResponse> =>
+    await apiFetch(
+      `/v1/store/${data.storeUuid}/user/${data.userPhoneNo}/cart/${data.cartUuid}`,
       "PATCH",
       token,
-      undefined,
+      data,
       false,
-      { storeUuid: data.storeUuid, userUuid: data.userPhone }
-    );
-  },
+      { storeUuid: data.storeUuid }
+    ),
 
-  removeCoupon: async (data: CartIdentifier, token: string) => {
-    return await apiFetch(
-      `/v1/store/${data.storeUuid}/user/${data.userPhone}/cart/${data.cartUuid}/removecoupon`,
+
+  addCartItem: async (data: AddCartItemRequest, token: string | null): Promise<CartResponse> =>
+    await apiFetch(
+      `/v1/store/${data.storeUuid}/user/${data.userPhoneNo}/cart/${data.cartUuid}/cartitem`,
+      "POST",
+      token,
+      data,
+      false,
+      { storeUuid: data.storeUuid }
+    ),
+
+  removeCartItem: async (data: RemoveCartItemRequest, token: string | null): Promise<CartResponse> =>
+    await apiFetch(
+      `/v1/store/${data.storeUuid}/user/${data.userPhoneNo}/cart/${data.cartUuid}/cartitem`,
+      "DELETE",
+      token,
+      data,
+      false,
+      { storeUuid: data.storeUuid }
+    ),
+
+  addQuantity: async (data: AddQuantityRequest, token: string | null): Promise<CartResponse> =>
+    await apiFetch(
+      `/v1/store/${data.storeUuid}/user/${data.userPhoneNo}/cart/${data.cartUuid}/cartitem/${data.cartItemUuid}/add`,
+      "PATCH",
+      token,
+      data,
+      false,
+      { storeUuid: data.storeUuid }
+    ),
+
+  removeQuantity: async (data: RemoveQuantityRequest, token: string | null): Promise<CartResponse> =>
+    await apiFetch(
+      `/v1/store/${data.storeUuid}/user/${data.userPhoneNo}/cart/${data.cartUuid}/cartitem/${data.cartItemUuid}/remove`,
+      "PATCH",
+      token,
+      data,
+      false,
+      { storeUuid: data.storeUuid }
+    ),
+
+  createAddOn: async (data: CreateAddOnRequest, token: string | null) : Promise<CartResponse>=>
+    await apiFetch(
+      `/v1/store/${data.storeUuid}/user/${data.userPhoneNo}/cart/${data.cartUuid}/cartitem/${data.cartItemUuid}/addon`,
+      "POST",
+      token,
+      data,
+      false,
+      { storeUuid: data.storeUuid }
+    ),
+
+  removeAddOn: async (data: RemoveAddOnRequest, token: string | null) : Promise<CartResponse>=>
+    await apiFetch(
+      `/v1/store/${data.storeUuid}/user/${data.userPhoneNo}/cart/${data.cartUuid}/cartitem/${data.cartItemUuid}/addon/${data.addOnUuid}`,
       "DELETE",
       token,
       undefined,
       false,
-      { storeUuid: data.storeUuid, userUuid: data.userPhone }
-    );
-  },
-};
+      { storeUuid: data.storeUuid }
+    ),
 
-export default cartService;
+  increaseAddOnQuantity: async (data: IncreaseAddOnQuantityRequest, token: string | null): Promise<CartResponse> =>
+    await apiFetch(
+      `/v1/store/${data.storeUuid}/user/${data.userPhoneNo}/cart/${data.cartUuid}/cartitem/${data.cartItemUuid}/addon/${data.addOnUuid}/add_quantity`,
+      "PATCH",
+      token,
+      data,
+      false,
+      { storeUuid: data.storeUuid }
+    ),
+
+  removeAddOnQuantity: async (data: RemoveAddOnQuantityRequest, token: string | null): Promise<CartResponse> =>
+    await apiFetch(
+      `/v1/store/${data.storeUuid}/user/${data.userPhoneNo}/cart/${data.cartUuid}/cartitem/${data.cartItemUuid}/addon/${data.addOnUuid}/remove_quantity`,
+      "PATCH",
+      token,
+      data,
+      false,
+      { storeUuid: data.storeUuid }
+    ),
+
+  validateCoupon: async (data: ValidCouponRequest, token: string | null): Promise<CartResponse> =>
+    await apiFetch(
+      `/v1/store/${data.storeUuid}/user/${data.userPhoneNo}/cart/${data.cartUuid}/validate_coupon/${data.couponCode}`,
+      "GET",
+      token,
+      undefined,
+      false,
+      { storeUuid: data.storeUuid }
+    ),
+
+  addCoupon: async (data: AddCouponRequest, token: string | null): Promise<CartResponse> =>
+    await apiFetch(
+      `/v1/store/${data.storeUuid}/user/${data.userPhoneNo}/cart/${data.cartUuid}/coupon/${data.couponCode}`,
+      "PATCH",
+      token,
+      undefined,
+      false,
+      { storeUuid: data.storeUuid }
+    ),
+
+  removeCoupon: async (data: RemoveCouponRequest, token: string | null) : Promise<CartResponse>=>
+    await apiFetch(
+      `/v1/store/${data.storeUuid}/user/${data.userPhoneNo}/cart/${data.cartUuid}/removecoupon`,
+      "DELETE",
+      token,
+      undefined,
+      false,
+      { storeUuid: data.storeUuid }
+    ),
+
+  validateCart: async (data: ValidateCartRequest, token: string | null) : Promise<CartResponse>=>
+    await apiFetch(
+      `/v1/store/${data.storeUuid}/user/${data.userPhoneNo}/cart/${data.cartUuid}/validate`,
+      "GET",
+      token,
+      undefined,
+      false,
+      { storeUuid: data.storeUuid }
+    ),
+}
+
+export default cartService
+
