@@ -1,56 +1,62 @@
-// File: app/store/[storeUuid]/menu/page.tsx
-
-
 import { cookies } from "next/headers";
-import jwt from "jsonwebtoken"; // decode JWT on the server
+import jwt from "jsonwebtoken";
 import getMenuData from "@/lib/menu-service";
+import storeService from "@/lib/store-service";
 import MenuClient from "./MenuClient";
 import type { StoreResponse } from "@/lib/store-service";
-import storeService from "@/lib/store-service";
+export default async function MenuPage(props: { params: { storeUuid: string } }) {
+  const { storeUuid } =  await props.params;
 
-export default async function MenuPage({
-  params,
-}: {
-  params: { storeUuid: string };
-}) {
+  const cookieStore = await cookies(); // no need to `await` cookies() in Next 13/14 App Router
+  const sessionToken =  cookieStore.get("session")?.value || null;
 
-  const rawToken = cookies().get("auth_token")?.value || "";
-  console.log(rawToken)
-
+  let jwtToken: string | null = null;
   let decodedToken: Record<string, any> | null = null;
-  if (rawToken) {
+
+  if (sessionToken) {
     try {
-      decodedToken = jwt.decode(rawToken) as Record<string, any>;
+      const jwtRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/customer/jwt`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ session_token: sessionToken }),
+        cache: "no-store",
+      });
+
+      if (jwtRes.ok) {
+        const data = await jwtRes.json();
+        jwtToken = data.token;
+        decodedToken = jwt.decode(jwtToken) as Record<string, any>;
+      } else {
+        console.warn("JWT fetch failed with status:", jwtRes.status);
+      }
     } catch (err) {
-      console.error("Failed to decode JWT:", err);
-      decodedToken = null;
+      console.error("Error fetching JWT:", err);
     }
   }
 
-  // Example: you could pull out user_uuid or other claims here:
-  const userUuid = decodedToken?.user_uuid ?? null;
+  const user_phone_number = decodedToken?.user_phone_number ?? null;
+  const name = decodedToken?.name ?? null;
 
-  // 3. Fetch menu data (server-side) using the rawToken for authorization
-  const { categories, products, dietaryPreferences } = await getMenuData(
-    params.storeUuid,
-    rawToken
-  );
+  const [menuData, storeResponse] = await Promise.all([
+    getMenuData(storeUuid, jwtToken || ""),
+    storeService.getStore(storeUuid, jwtToken || ""),
+  ]);
 
-  // 4. Fetch store details (server-side) using the same rawToken
-  const storeResponse: StoreResponse = await storeService.getStore(
-    params.storeUuid,
-    rawToken
-  );
+  const { categories, products, dietaryPreferences } = menuData;
   const store = storeResponse.store;
 
-  // 5. Pass decoded user info down to the client if needed
   return (
     <MenuClient
       store={store}
       categories={categories}
       products={products}
       dietPreferences={dietaryPreferences}
-      // userUuid={userUuid} // optional: client can use this claim
+      session_token={sessionToken}
+      jwt_token={jwtToken}
+      user_phone_number={user_phone_number}
+      name={name}
     />
   );
 }

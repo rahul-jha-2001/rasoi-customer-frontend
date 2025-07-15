@@ -155,3 +155,7 @@
   --color-4: 195 100% 63%;
   --color-5: 90 100% 63%;
 }
+#recaptcha-container {
+  z-index: 9999 !important;
+  position: relative;
+}

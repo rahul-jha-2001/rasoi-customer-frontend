@@ -2,6 +2,9 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { UserProvider } from "@/lib/context/UserContext"
+import Script from "next/script";
+
+
 import React from "react"
 import "./globals.css"
 
@@ -31,10 +34,21 @@ export default function StoreLayout({ children, params }: LayoutProps) {
 
   return (
     <html lang="en">
+      
+      <head>
+        <Script
+          src={`https://www.google.com/recaptcha/api.js?render=explicit`}
+          strategy="beforeInteractive"
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-          <UserProvider>{children}</UserProvider>
+      >     
+
+          <UserProvider>
+            {children}
+
+          </UserProvider>
       </body>
     </html>
   )

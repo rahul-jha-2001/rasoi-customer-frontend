@@ -13,7 +13,7 @@ export default function StoreInfoHeader({ store }: { store: Store }) {
       <div className="mb-8">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6">
           <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-primary/20">
-            <Image src="/placeholder.svg?height=200&width=200" alt="Restaurant Logo" fill className="object-cover" />
+            <Image src= {store.imageUrl} alt="Restaurant Logo" fill className="object-cover" />
           </div>
           <div className="text-center md:text-left">
             <h1 className="text-3xl font-bold">{store.storeName}</h1>

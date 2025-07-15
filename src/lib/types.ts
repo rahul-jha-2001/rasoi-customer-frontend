@@ -480,6 +480,7 @@ export enum ProductStatus {
     isOpen: boolean;
     createdAt: string;
     updatedAt: string;
+    imageUrl : string ;
   }
   
   export interface StoreResponse {
@@ -505,7 +506,7 @@ export enum ProductStatus {
   export interface OtpSignupRequest {
     token: string;         // Firebase ID token from OTP signin
     name: string;
-    phone_number: string;
+    phoneNumber: string;
   }
   
   export interface CreateUserRequest {
@@ -515,10 +516,10 @@ export enum ProductStatus {
   
   export interface AccessTokenResponse {
     token: string;          // Short-lived JWT
-    session_token: string;  // Firebase session cookie
+    sessionToken: string;  // Firebase session cookie
   }
   
   export interface TokenRefreshRequest {
-    session_token: string;
+    sessionToken: string;
   }
   

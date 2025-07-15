@@ -1,71 +1,41 @@
-// File: src/lib/context/UserContext.tsx
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-} from "react";
-import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
-import { auth } from "../firebase"; // adjust path as needed
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-
-export interface Customer {
-  user_uuid: string;      // Firebase UID or your internal UUID
-  phone_number: string;
-  name: string;
-  is_verified: boolean;   // Optional: based on OTP verification
-  created_at: string;
+interface User {
   token: string;
+  phone?: string | null;
+  name?: string | null;
 }
 
 interface UserContextType {
-  user: Customer | null;
+  user: User | null;
+  setUser: (user: User | null) => void;
   loading: boolean;
 }
 
 const UserContext = createContext<UserContextType>({
   user: null,
+  setUser: () => {},
   loading: true,
 });
 
-export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<Customer | null>(null);
+export function UserProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      async (firebaseUser: FirebaseUser | null) => {
-        if (firebaseUser) {
-          // Fetch the ID token (async)
-          const token = await firebaseUser.getIdToken();
-
-          setUser({
-            user_uuid: firebaseUser.uid,
-            phone_number: firebaseUser.phoneNumber || "",
-            name: "", // fetch from your DB or ask later
-            is_verified: firebaseUser.phoneNumber !== null,
-            created_at: new Date().toISOString(),
-            token,
-          });
-        } else {
-          setUser(null);
-        }
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
+    // Optional: add logic to fetch user from cookies/localStorage
+    setLoading(false); // Mark as done loading after initial render
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, loading }}>
+    <UserContext.Provider value={{ user, setUser, loading }}>
       {children}
     </UserContext.Provider>
   );
-};
+}
 
-export const useUser = () => useContext(UserContext);
+export function useUser() {
+  return useContext(UserContext);
+}

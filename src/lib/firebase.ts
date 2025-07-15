@@ -1,6 +1,7 @@
-import { initializeApp, getApps } from "firebase/app"
-import { getAuth, RecaptchaVerifier } from "firebase/auth"
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getAuth, RecaptchaVerifier } from "firebase/auth";
 
+// Firebase config from environment
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
@@ -8,54 +9,97 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
-}
+};
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
-export const auth = getAuth(app)
+// Initialize the Firebase app (singleton)
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+export const auth = getAuth(app);
 
-let recaptchaVerifier: RecaptchaVerifier | null = null
+// Track active verifiers to prevent duplicates
+let activeVerifiers: Map<string, RecaptchaVerifier> = new Map();
 
-export const getRecaptcha = (containerId: string): RecaptchaVerifier | null => {
-  if (typeof window === "undefined") return null
+/**
+ * Creates a new reCAPTCHA verifier instance
+ */
+export const createRecaptcha = (containerId: string): RecaptchaVerifier | null => {
+  if (typeof window === "undefined") return null;
+  
+  if (!window.grecaptcha) {
+    console.warn("⚠️ grecaptcha not yet available");
+    return null;
+  }
 
-  // Return existing verifier if it exists and is not destroyed
-  if (recaptchaVerifier) {
-    try {
-      // Check if the verifier is still valid
-      return recaptchaVerifier
-    } catch (error) {
-      // If there's an error, clear and recreate
-      recaptchaVerifier = null
-    }
+  // Check if auth is properly initialized
+  if (!auth || !auth.app) {
+    console.error("❌ Firebase Auth not properly initialized");
+    return null;
   }
 
   try {
-    recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
-      size: "invisible",
+    // Clear any existing verifier for this container
+    clearRecaptcha(containerId);
+
+    console.log("🆕 Creating new reCAPTCHA verifier for:", containerId);
+    
+    const recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
+      size: "normal",
       callback: (response: string) => {
-        console.log("✅ reCAPTCHA solved", response)
+        console.log("✅ reCAPTCHA solved:", response);
       },
       "expired-callback": () => {
-        console.log("⚠️ reCAPTCHA expired")
-        resetRecaptcha()
+        console.warn("⚠️ reCAPTCHA expired");
+        clearRecaptcha(containerId);
       },
-    })
+      "error-callback": (error: any) => {
+        console.error("❌ reCAPTCHA error:", error);
+        clearRecaptcha(containerId);
+      }
+    });
 
-    return recaptchaVerifier
+    // Store the verifier
+    activeVerifiers.set(containerId, recaptchaVerifier);
+    
+    return recaptchaVerifier;
   } catch (error) {
-    console.error("Failed to create reCAPTCHA verifier:", error)
-    return null
+    console.error("❌ Failed to initialize reCAPTCHA verifier:", error);
+    return null;
   }
-}
+};
 
-export const resetRecaptcha = () => {
-  if (recaptchaVerifier) {
+/**
+ * Clears a specific reCAPTCHA verifier
+ */
+export const clearRecaptcha = (containerId: string) => {
+  const verifier = activeVerifiers.get(containerId);
+  if (verifier) {
     try {
-      recaptchaVerifier.clear()
-    } catch (error) {
-      console.error("Error clearing reCAPTCHA:", error)
+      verifier.clear();
+      console.log("🧹 reCAPTCHA verifier cleared for:", containerId);
+    } catch (e) {
+      console.error("❌ Error clearing verifier:", e);
     } finally {
-      recaptchaVerifier = null
+      activeVerifiers.delete(containerId);
     }
   }
-}
+};
+
+/**
+ * Clears all active reCAPTCHA verifiers
+ */
+export const clearAllRecaptcha = () => {
+  activeVerifiers.forEach((verifier, containerId) => {
+    try {
+      verifier.clear();
+      console.log("🧹 Cleared reCAPTCHA verifier for:", containerId);
+    } catch (e) {
+      console.error("❌ Error clearing verifier for", containerId, ":", e);
+    }
+  });
+  activeVerifiers.clear();
+};
+
+/**
+ * Legacy function for backward compatibility
+ */
+export const getRecaptcha = createRecaptcha;
+export const resetRecaptcha = () => clearAllRecaptcha();

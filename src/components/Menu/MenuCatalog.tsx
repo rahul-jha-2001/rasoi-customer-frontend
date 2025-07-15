@@ -90,15 +90,15 @@ export default function MenuCatalog({ categories, products, dietPreferences }: M
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
+      {/* <AnimatePresence>
         {isCartOpen && (
           <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 300 }} className="fixed inset-y-0 right-0 z-50 bg-background border-l shadow-lg w-full max-w-md overflow-y-auto">
             <CartView cart={cart} products={products} onClose={toggleCart} />
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence> */}
 
-      <motion.div className="fixed bottom-4 right-4 z-40" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+      {/* <motion.div className="fixed bottom-4 right-4 z-40" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
         <RainbowButton size="lg" className="rounded-full w-16 h-16 shadow-lg" onClick={toggleCart}>
           <ShoppingCart className="h-6 w-6" />
           {cartItems.length > 0 && (
@@ -107,7 +107,7 @@ export default function MenuCatalog({ categories, products, dietPreferences }: M
             </span>
           )}
         </RainbowButton>
-      </motion.div>
+      </motion.div> */}
     </div>
   )
 }

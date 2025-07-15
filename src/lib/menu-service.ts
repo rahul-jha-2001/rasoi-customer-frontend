@@ -1,11 +1,11 @@
 import productService from "./product-service";
 import {
   Category,
-  DietaryPreference,
   ListCategoryResponse,
-  ListProductsResponse,
   ListDietPrefResponse,
-} from "./product-service"; // adjust based on your file structure
+  DietaryPreference,
+  ListProductsResponse,
+} from "./types"; // adjust based on your file structure
 
 export interface MenuData {
   categories: Category[];
@@ -13,11 +13,11 @@ export interface MenuData {
   dietaryPreferences: DietaryPreference[];
 }
 
-async function getMenuData(storeUuid: string, token: string): Promise<MenuData> {
-    const [categoriesRes, productsRes, dietPrefsRes] = await Promise.all([
-    productService.listCategories({ storeUuid, limit: 100, page: 1 }, token),
-    productService.listAllProducts(storeUuid, 500, 1, token),
-    productService.listDietPrefs({ storeUuid, limit: 100, page: 1 }, token),
+async function getMenuData(storeUuid: string, token: string|null): Promise<MenuData> {
+    const [categoriesRes, productsRes, dietPrefsRes]: [ListCategoryResponse, ListProductsResponse, ListDietPrefResponse] = await Promise.all([
+    productService.listCategories({ storeUuid, limit: 100, page: 1 }, token) as Promise<ListCategoryResponse>,
+    productService.listAllProducts(storeUuid, 500, 1, token) as Promise<ListProductsResponse>,
+    productService.listDietPrefs({ storeUuid, limit: 100, page: 1 }, token) as Promise<ListDietPrefResponse>,
   ]);
 
   return {
